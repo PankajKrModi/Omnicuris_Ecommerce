@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -46,12 +47,11 @@ public class ItemController {
   }
 
   @PreAuthorize("hasRole('ADMIN')")
-  @PutMapping(value = "/delete/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity deleteItemById(@PathVariable("id") Long id,
-      @RequestBody UpdateItemRequest updateItemRequest) {
+  @RequestMapping(value = "/delete/{name}",method=RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity deleteItemByName(@PathVariable("name") String product_name) {
     try {
-      itemService.deleteItemById(id, updateItemRequest);
-      return ResponseEntity.ok().body("Item_id:"+ id +"deletion successful");
+      itemService.deleteItemByName(product_name);
+      return ResponseEntity.ok().body("Product:"+ product_name +"deletion successful");
     } catch (ServiceResponseException e) {
       return ResponseEntity.status(e.getStatus()).body(e.getMessage());
     }

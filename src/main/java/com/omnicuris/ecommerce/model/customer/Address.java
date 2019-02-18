@@ -1,5 +1,9 @@
 package com.omnicuris.ecommerce.model.customer;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.omnicuris.ecommerce.model.order.Order;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -14,21 +18,23 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "address")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
+property = "id")
 public class Address {
 
   @Id
   @GeneratedValue
   private Long id;
 
+  
   @ManyToOne(targetEntity = Customer.class)
-  private Customer custId;
+  private Customer customer;
 
   @NotNull
-  @NotBlank
   private String address;
   
-  @OneToOne(targetEntity = Order.class,mappedBy="addrId")
-  private Order orderId;
+//  @OneToOne(targetEntity = Order.class,mappedBy="addr")
+//  private Order order;
 
 public Long getId() {
 	return id;
@@ -39,11 +45,11 @@ public void setId(Long id) {
 }
 
 public Customer getCustId() {
-	return custId;
+	return customer;
 }
 
 public void setCustId(Customer custId) {
-	this.custId = custId;
+	this.customer = custId;
 }
 
 public String getAddress() {
@@ -55,13 +61,13 @@ public void setAddress(String address) {
 }
 
 
-public Order getOrderId() {
-	return orderId;
-}
-
-public void setOrderId(Order orderId) {
-	this.orderId = orderId;
-}
+//public Order getOrderId() {
+//	return order;
+//}
+//
+//public void setOrderId(Order orderId) {
+//	this.order = orderId;
+//}
   
   
 }

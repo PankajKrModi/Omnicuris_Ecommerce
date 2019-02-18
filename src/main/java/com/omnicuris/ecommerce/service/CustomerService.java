@@ -6,6 +6,9 @@ import com.omnicuris.ecommerce.model.customer.Customer;
 import com.omnicuris.ecommerce.model.customer.CustomerSignupRequest;
 import com.omnicuris.ecommerce.repository.AddressRepository;
 import com.omnicuris.ecommerce.repository.CustomerRepository;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,21 +29,20 @@ public class CustomerService {
           .message("Invalid email " + customerSignupRequest.getEmailId());
     }
 
-    if (!ValidationUtil.validateContact(customerSignupRequest.getContactNo())) {
+    if (!ValidationUtil.validateContact(customerSignupRequest.getContact())) {
       throw ServiceResponseException.status(HttpStatus.BAD_REQUEST)
-          .message("Invalid contact number " + customerSignupRequest.getContactNo());
+          .message("Invalid contact number " + customerSignupRequest.getContact());
     }
   }
 
-  public void addCustomer(CustomerSignupRequest customerSignupRequest) {
-
+  public void addCustomer(CustomerSignupRequest customerSignupRequest) throws Exception{
+	  
     Customer customer = new Customer();
     customer.setfName(customerSignupRequest.getfName());
     customer.setlName(customerSignupRequest.getlName());
-    customer.setContact(customerSignupRequest.getContactNo());
+    customer.setContact(customerSignupRequest.getContact());
     customer.setEmailId(customerSignupRequest.getEmailId());
-
-    // save customer
+    
     Customer savedCustomer = customerRepository.save(customer);
 
     customerSignupRequest.getAddress().forEach(
@@ -51,5 +53,9 @@ public class CustomerService {
               // save address
               addressRepository.save(address);
             });
+  }
+  
+  public List<Customer> findAll(){
+	  return customerRepository.findAll();
   }
 }

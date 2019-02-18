@@ -32,7 +32,7 @@ public class Transaction {
 
   @Column(nullable = false, updatable = false)
   @CreatedDate
-  @Temporal(TemporalType.TIMESTAMP)
+  @Temporal(TemporalType.DATE)
   private Date createdDate;
 
 public Long getId() {

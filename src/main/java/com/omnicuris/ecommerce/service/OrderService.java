@@ -72,11 +72,12 @@ public class OrderService {
 	      throw ServiceResponseException.status(HttpStatus.BAD_REQUEST)
 	          .message("Invalid address id " + orderRequest.getAddressId());
 	    }
-	    if (!addressRepository
+	   
+	    if (addressRepository
 	        .findById(orderRequest.getAddressId())
 	        .get()
-	        .getCustId()
-	        .equals(orderRequest.getCustomerId())) {
+	        .getCustId().getId()
+	        .equals(orderRequest.getCustomerId())==false) {
 	      throw ServiceResponseException.status(HttpStatus.BAD_REQUEST)
 	          .message(
 	              "Invalid address "
@@ -95,22 +96,32 @@ public class OrderService {
   public Order addToCart(OrderRequest orderRequest) {
 	 
     Order orders = new Order();
+    int totalqty =0;
+    double orderPrice =0;
+    List<OrderItem> listitemOrdered = new ArrayList<OrderItem>();
     for(OrderItemsRequest orderItemReq: orderRequest.getOrderItems()) {
     	Item item = itemRepository.findById(orderItemReq.getItemId()).get();
     	
     	OrderItem o_item = new OrderItem();
     	o_item.setItem(item);
     	o_item.setQty(orderItemReq.getQty());
-    	orders.getOrders().add(o_item);
-    	orders.setItemQty(orders.getItemQty().intValue()+orderItemReq.getQty().intValue());
-    	orders.setOrderTotal(orders.getOrderTotal().doubleValue()+item.getPurchase_price()*orderItemReq.getQty());
+    	//orders.getOrders().add(o_item);
+    	totalqty += orderItemReq.getQty().intValue();
+    	orderPrice += item.getSell_price()*orderItemReq.getQty().intValue();
+    	listitemOrdered.add(o_item);
     }
-    	
+    orders.setItemQty(totalqty);
+    orders.setOrderTotal(orderPrice);
     orders.setAddrId(addressRepository
 	        .findById(orderRequest.getAddressId()).get());
     orders.setCustId(customerRepository.findById(orderRequest.getCustomerId()).get());
-    return orderRepository.save(orders);
-    
+    orders.setStatus(orderRequest.getStatus());
+    Order savedOrder = orderRepository.save(orders);
+    listitemOrdered.forEach(order_item->{
+    	order_item.setOrder(savedOrder);
+    });
+    orderItemRepository.saveAll(listitemOrdered);
+    return savedOrder;
   }
 
   
@@ -121,42 +132,57 @@ public class OrderService {
       throw ServiceResponseException.status(HttpStatus.BAD_REQUEST)
           .message("Invalid order id " + id);
     }
-    //validateEachOrder(orderRequest);
-    for (OrderItemsRequest orderItem : orderRequest.getOrderItems()) {
-        validateEachOrder(orderItem);
-      }
-
+    
     Transaction transaction = orderRepository.findById(id).get().getTransId();
     if (transaction != null) {
       throw ServiceResponseException.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .message("Cannot modify cart since transaction was recorded against this order!");
     }
     
-    ;
+    if(orderRequest.getStatus().equals(OrderStatus.CANCELLED)) {
+    	Order order = orderRepository.findById(id).get();
+    	orderRepository.delete(order);
+    	return order;
+    }
+    
+    //validateEachOrder(orderRequest);
+    for (OrderItemsRequest orderItem : orderRequest.getOrderItems()) {
+        validateEachOrder(orderItem);
+      }
+
     Order orders = orderRepository.findById(id).get();
     //setting values to 0 
     orders.setItemQty(0);
     orders.setOrderTotal(0.0);
-    
-    List<OrderItem> orderItems = orderItemRepository.findByOrderId(id);
-    //setting orderTotal and totalItemQty for Order
-    for(OrderItem orderItem_fromDB: orderItems) {
+    int totalqty =0;
+    double orderPrice =0;
+   
+    for (OrderItemsRequest orderRequestItem : orderRequest.getOrderItems()) {
     	
-    	for (OrderItemsRequest orderItem : orderRequest.getOrderItems()) {
+    	Optional<OrderItem> order_item = orderItemRepository.findByOrder_Item(orderRequestItem.getItemId(), id);
+    	if(order_item.isPresent()) {
+    		order_item.get().setQty(orderRequestItem.getQty());
+    		totalqty += orderRequestItem.getQty();
+    		orderPrice += itemRepository.findById(orderRequestItem.getItemId()).get().getSell_price()*orderRequestItem.getQty();
+    		orderItemRepository.save(order_item.get());
+    	}else {
+    		Item item = itemRepository.findById(orderRequestItem.getItemId()).get();
     		
-    		if(orderItem.getItemId()==orderItem_fromDB.getId()) {
-    			Item item = itemRepository.findById(orderItem.getItemId()).get();
-    			orderItem_fromDB.setQty(orderItem.getQty());
-    			orders.setItemQty(orders.getItemQty().intValue()+orderItem.getQty().intValue());
-    	    	orders.setOrderTotal(orders.getOrderTotal().doubleValue()+item.getPurchase_price()*orderItem.getQty());
-    		}
+    			OrderItem o_item = new OrderItem();
+    			o_item.setItem(item);
+    			o_item.setQty(orderRequestItem.getQty());
+    			o_item.setOrder(orders);
+    			orderItemRepository.save(o_item);
+    			totalqty += orderRequestItem.getQty();
+        		orderPrice += item.getSell_price()*orderRequestItem.getQty();	
+    		}   	
     	}
-    	
-    }
     orders.setAddrId(addressRepository
 	        .findById(orderRequest.getAddressId()).get());
-    return orderRepository.save(orders); 
-  }
+    orders.setItemQty(totalqty);
+    orders.setOrderTotal(orderPrice);
+    return orderRepository.save(orders);	
+    }
 
 
   public Order findById(Long id) throws ServiceResponseException {

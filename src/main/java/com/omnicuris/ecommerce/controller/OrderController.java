@@ -7,9 +7,11 @@ import com.omnicuris.ecommerce.service.OrderService;
 import com.omnicuris.ecommerce.service.TransactionService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,6 +57,20 @@ public class OrderController {
     } catch (ServiceResponseException e) {
       return ResponseEntity.status(e.getStatus()).body(e.getMessage());
     }
+  }
+  
+  @PreAuthorize("hasRole('USER')")
+  @DeleteMapping(
+      value = "/cancel/{id}",
+      consumes = MediaType.APPLICATION_JSON_VALUE
+      )
+  public ResponseEntity removeCartOrder(@PathVariable("id") Long id, @RequestBody OrderRequest orderRequest) {
+    try {
+    	orderService.validateAndSaveOrderEditRequest(id, orderRequest);
+    	return ResponseEntity.status(HttpStatus.ACCEPTED).body("Deleted Order with orderId :"+id);
+    } catch (ServiceResponseException e) {
+      return ResponseEntity.status(e.getStatus()).body(e.getMessage());
+  }
   }
 
   @PreAuthorize("hasRole('USER')")

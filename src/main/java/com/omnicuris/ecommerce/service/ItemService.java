@@ -23,8 +23,9 @@ public class ItemService {
       throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Price is invalid"+item.getSell_price());
     }
     
-    if(item.getPurchase_price() == null || item.getPurchase_price() > item.getSell_price()) {
-    	throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Buy Price is invalid or Greater than Selling Price"+item.getPurchase_price());
+    if(item.getBuy_price() == null || item.getBuy_price() > item.getSell_price()) {
+    	
+    	throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Buy Price is invalid or Greater than Selling Price "+item.getBuy_price());
     }
     //On adding new item check qty
     if(item.getQty()== null || item.getQty() <= 0) {
@@ -35,10 +36,10 @@ public class ItemService {
   public void validateUpdateRequest(UpdateItemRequest updateItemRequest)
       throws ServiceResponseException {
     
-    if (updateItemRequest.getSell_price() == null || updateItemRequest.getSell_price() <= 0)
-    	throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Selling Price is invalid");
-    if (updateItemRequest.getPurchase_price() == null || updateItemRequest.getPurchase_price() <updateItemRequest.getSell_price() ) {
-      throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Purchase Price is invalid or lesser than Selling Price");
+    if (updateItemRequest.getBuy_price() == null || updateItemRequest.getBuy_price().doubleValue() <= 0.0)
+    	throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Buy Price is invalid");
+    if (updateItemRequest.getSell_price() == null || updateItemRequest.getBuy_price() >updateItemRequest.getSell_price() ) {
+      throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Selling Price is invalid or lesser than Buying Price");
     }
     //no check on qty as Admin can decrease or increase the item in Stock
   }
@@ -68,19 +69,17 @@ public class ItemService {
     item.setName(updateItemRequest.getName());
     item.setDescription(updateItemRequest.getDescription());
     item.setSell_price(updateItemRequest.getSell_price());
-    item.setPurchase_price(updateItemRequest.getPurchase_price());
+    item.setBuy_price(updateItemRequest.getBuy_price());
     item.setQty(updateItemRequest.getQtyChange() + item.getQty()); //change in qty
     return itemRepository.save(item);
   }
   
-  public void deleteItemById(Long id, UpdateItemRequest updateItemRequest)
+  public void deleteItemByName(String name)
 	      throws ServiceResponseException {
-	    Optional<Item> itemOptional = itemRepository.findById(id);
-	    if (!itemOptional.isPresent()) {
-	      throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Invalid item " + id);
+	    Item item = itemRepository.findByName(name);
+	    if (item == null) {
+	      throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Invalid item " + name);
 	    }
-
-	    Item item = itemOptional.get();
 	    itemRepository.delete(item);
 	  }
   

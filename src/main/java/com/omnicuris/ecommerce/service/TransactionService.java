@@ -11,6 +11,9 @@ import com.omnicuris.ecommerce.model.order.TransactionStatus;
 import com.omnicuris.ecommerce.repository.ItemRepository;
 import com.omnicuris.ecommerce.repository.OrderRepository;
 import com.omnicuris.ecommerce.repository.TransactionRepository;
+
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -35,12 +38,15 @@ public class TransactionService {
     if (transactionRequest.getOrderId()==null||!orderRepository.existsById(transactionRequest.getOrderId())) {
       throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Invalid order id");
     }
-
+    if(!transactionRequest.getStatus().equals(TransactionStatus.SUCCESS)) {
+    	throw ServiceResponseException.status(HttpStatus.BAD_REQUEST).message("Transaction status should be Success");
+    }
       Long orderId = transactionRequest.getOrderId();
       Order order = orderRepository.findById(orderId).get();
+   
       if (!order.getStatus().equals(OrderStatus.ORDERED)) {
         throw ServiceResponseException.status(HttpStatus.BAD_REQUEST)
-            .message("Transaction not allowed if status NOT ORDERED");
+            .message("Transaction not allowed if Order status other than  Ordered");
       }
       if (order.getTransId() != null
           && order.getTransId().getStatus().equals(TransactionStatus.SUCCESS)) {
@@ -57,19 +63,30 @@ public class TransactionService {
     Order order = orderRepository.findById(transactionRequest.getOrderId()).get();
     
     //Decreasing itemCount from Item table for items  as transaction completes
+    order.setOrderedAt(new Date());
+    
     updateItems(order);
     Transaction transaction = new Transaction();
     transaction.setOrder(order);
-    transaction.setStatus(transactionRequest.getStatus());
-    return transactionRepository.save(transaction);
-
+    transaction.setStatus(TransactionStatus.SUCCESS);
+    transaction.setCreatedDate(new Date());
+    
+    Transaction savedTransaction =  transactionRepository.save(transaction);
+    
+    order.setTransId(savedTransaction);
+    orderRepository.save(order);
+    return savedTransaction;
   }
   
   public void updateItems(Order order){
 	  
 	 Set<OrderItem> orderItems = order.getOrders();
-	 for(OrderItem orderItem: orderItems) {
-		orderItem.getItem().setQty(orderItem.getItem().getQty()-orderItem.getQty());
-	 }
+	 List<Item> items = new ArrayList<>();
+	 orderItems.forEach(orderitem->{
+		 Item item = orderitem.getItem();
+		 item.setQty(item.getQty()-orderitem.getQty());	 
+		 itemRepository.save(item);
+	 });
+	 
   }
 }

@@ -1,5 +1,8 @@
 package com.omnicuris.ecommerce.model.order;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.omnicuris.ecommerce.model.OrderItem.OrderItem;
 import com.omnicuris.ecommerce.model.customer.Address;
 import com.omnicuris.ecommerce.model.customer.Customer;
@@ -13,16 +16,40 @@ import javax.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
 
 @Entity
-@Table(name = "order")
+@Table(name = "t_order")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
+property = "id")
 public class Order {
 
   @Id
   @GeneratedValue
   private Long id;
 
-  @OneToMany(mappedBy="order")
+  @OneToMany(mappedBy="order",orphanRemoval=true)
   private Set<OrderItem> orderItem = new HashSet<OrderItem>();
   
+  @JsonIgnore
+  @OneToOne(targetEntity = Address.class)
+  private Address addr;
+
+  @JsonIgnore
+  @ManyToOne(targetEntity = Customer.class)
+  private Customer customer;
+
+  @Enumerated(value = EnumType.STRING)
+  private OrderStatus status;
+
+  @OneToOne(targetEntity = Transaction.class)
+  private Transaction transaction;
+
+  private Integer itemQty;
+  private Double orderTotal;
+
+
+  @CreatedDate
+  @Temporal(TemporalType.DATE)
+  private Date orderedAt;
+
   
   public Set<OrderItem> getOrders() {
 	return orderItem;
@@ -31,27 +58,6 @@ public class Order {
 public void setOrders(Set<OrderItem> orderItem) {
 	this.orderItem = orderItem;
 }
-
-  @OneToOne(targetEntity = Address.class)
-  private Address addrId;
-
-  @ManyToOne(targetEntity = Customer.class)
-  private Customer custId;
-
-  @Enumerated(value = EnumType.STRING)
-  private OrderStatus status;
-
-  @OneToOne(targetEntity = Transaction.class)
-  private Transaction transId;
-
-  private Integer itemQty;
-  private Double orderTotal;
-
-
-  @Column(nullable = false, updatable = false)
-  @CreatedDate
-  @Temporal(TemporalType.TIMESTAMP)
-  private Date orderedAt;
 
 
 public Long getId() {
@@ -65,22 +71,22 @@ public void setId(Long id) {
 
 
 public Address getAddrId() {
-	return addrId;
+	return addr;
 }
 
 
 public void setAddrId(Address addrId) {
-	this.addrId = addrId;
+	this.addr = addrId;
 }
 
 
 public Customer getCustId() {
-	return custId;
+	return customer;
 }
 
 
 public void setCustId(Customer custId) {
-	this.custId = custId;
+	this.customer = custId;
 }
 
 
@@ -95,12 +101,12 @@ public void setStatus(OrderStatus status) {
 
 
 public Transaction getTransId() {
-	return transId;
+	return transaction;
 }
 
 
 public void setTransId(Transaction transId) {
-	this.transId = transId;
+	this.transaction = transId;
 }
 
 

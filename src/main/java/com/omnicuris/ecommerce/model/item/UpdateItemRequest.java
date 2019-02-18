@@ -1,24 +1,21 @@
 package com.omnicuris.ecommerce.model.item;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 public class UpdateItemRequest {
 
   @NotNull
-  @NotBlank
   private String name;
   
   private String description;
-  @NotNull
-  @NotBlank
-  private Double sell_price;
-  @NotNull
-  @NotBlank
-  private Double purchase_price;
   
   @NotNull
-  @NotBlank
+  private Double sell_price;
+  
+  @NotNull
+  private Double buy_price;
+  
+  @NotNull
   private int qtyChange;
   
 public String getName() {
@@ -39,11 +36,11 @@ public Double getSell_price() {
 public void setSell_price(Double sell_price) {
 	this.sell_price = sell_price;
 }
-public Double getPurchase_price() {
-	return purchase_price;
+public Double getBuy_price() {
+	return buy_price;
 }
-public void setPurchase_price(Double purchase_price) {
-	this.purchase_price = purchase_price;
+public void setBuy_price(Double buy_price) {
+	this.buy_price = buy_price;
 }
 public int getQtyChange() {
 	return qtyChange;
