@@ -31,9 +31,7 @@
     * Application Servicer: Apache Tomcat Server
     * Database : Mysql Database.
     
- Database designed in way that by orderId Admin can see the quantity of each item ordered to which customer and address,
- can see the number of orders placed by Customer, number of items of particular type placed by Customer.     
-
+ 
  
  
       
